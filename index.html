@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <style>
+        /* Basic styling for better visual presentation */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #log {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap; /* Preserve formatting and allow wrapping */
+        }
+        form {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex-grow: 1;
+            padding: 8px;
+        }
+        button {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Client</h1>
+    
+    <!-- Message input form -->
+    <form onsubmit="sendMessage(event)">
+        <input id="msg" type="text" placeholder="Enter message" required autofocus>
+        <button type="submit">Send</button>
+    </form>
+    
+    <!-- Connection log display -->
+    <pre id="log"></pre>
+
+    <script>
+        // DOM element references
+        const log = document.getElementById("log");
+        const msgInput = document.getElementById("msg");
+        
+        /**
+         * WebSocket Connection
+         * 
+         * Establishes connection to WebSocket server at ws://localhost:3000
+         * Uses the browser's native WebSocket API
+         */
+        const socket = new WebSocket("ws://localhost:3000");
+        
+        /**
+         * Connection Opened Handler
+         * 
+         * Triggered when WebSocket connection is successfully established
+         */
+        socket.onopen = () => {
+            log.innerText += "Connected to server\n";
+            console.log("WebSocket connection established");
+        };
+        
+        /**
+         * Message Received Handler
+         * 
+         * Triggered when a message is received from the server
+         * @param {MessageEvent} event - Contains the received data in event.data
+         */
+        socket.onmessage = (event) => {
+            log.innerText += `Received: ${event.data}\n`;
+            // Auto-scroll to bottom of log
+            log.scrollTop = log.scrollHeight;
+        };
+        
+        /**
+         * Error Handler
+         * 
+         * Triggered when connection errors occur
+         * @param {ErrorEvent} err - Contains error information
+         */
+        socket.onerror = (err) => {
+            log.innerText += `Error: ${err.message}\n`;
+            console.error("WebSocket error:", err);
+        };
+        
+        /**
+         * Connection Closed Handler
+         * 
+         * Triggered when the WebSocket connection closes
+         */
+        socket.onclose = () => {
+            log.innerText += "Disconnected from server\n";
+            console.log("WebSocket connection closed");
+        };
+        
+        /**
+         * Send Message Function
+         * 
+         * Handles form submission to send messages via WebSocket
+         * @param {Event} event - Form submission event
+         */
+        function sendMessage(event) {
+            event.preventDefault(); // Prevent default form submission behavior
+            
+            const msg = msgInput.value.trim();
+            if (msg) {
+                // Check connection state before sending
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(msg);
+                    log.innerText += `Sent: ${msg}\n`;
+                    msgInput.value = ""; // Clear input field
+                    msgInput.focus(); // Return focus to input
+                } else {
+                    log.innerText += "Error: Not connected to server\n";
+                }
+            }
+        }
+        
+        // Optional: Send message when Enter key is pressed
+        msgInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                sendMessage(e);
+            }
+        });
+    </script>
+</body>
+</html>
